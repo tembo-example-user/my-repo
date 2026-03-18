@@ -4,21 +4,24 @@ import { authOptions } from "@/lib/auth";
 import { getTeamMetrics } from "@/lib/db/queries/metrics";
 import { metricsQuerySchema } from "@/lib/validators/metrics";
 import { rateLimit } from "@/lib/rate-limit";
-import { ApiError } from "@/lib/errors";
+import { handleApiError, generateRequestId } from "@/lib/errors";
 
 export async function GET(request: NextRequest) {
   try {
     const rateLimitResult = await rateLimit(request);
     if (!rateLimitResult.success) {
       return NextResponse.json(
-        { error: "Rate limit exceeded" },
+        { error: "Rate limit exceeded", statusCode: 429, requestId: generateRequestId() },
         { status: 429 }
       );
     }
 
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized", statusCode: 401, requestId: generateRequestId() },
+        { status: 401 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -31,16 +34,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: metrics });
   } catch (error) {
-    if (error instanceof ApiError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.statusCode }
-      );
-    }
-    console.error("[GET /api/metrics]", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error, "GET /api/metrics");
   }
 }

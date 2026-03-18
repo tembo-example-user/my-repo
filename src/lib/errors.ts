@@ -1,3 +1,8 @@
+import { NextResponse } from "next/server";
+import { ZodError } from "zod";
+import crypto from "crypto";
+import type { ApiErrorResponse } from "@/types/error.types";
+
 export class ApiError extends Error {
   statusCode: number;
 
@@ -41,4 +46,49 @@ export class RateLimitError extends ApiError {
     super(message, 429);
     this.name = "RateLimitError";
   }
+}
+
+export function generateRequestId(): string {
+  return crypto.randomUUID();
+}
+
+export function handleApiError(error: unknown, routeLabel: string): NextResponse<ApiErrorResponse> {
+  const requestId = generateRequestId();
+
+  if (error instanceof ApiError) {
+    console.error(`[${routeLabel}] [${requestId}]`, error.message);
+    return NextResponse.json(
+      { error: error.message, statusCode: error.statusCode, requestId },
+      { status: error.statusCode }
+    );
+  }
+
+  if (error instanceof ZodError) {
+    const details = error.errors.map((e) => ({
+      path: e.path.join("."),
+      message: e.message,
+    }));
+    console.error(`[${routeLabel}] [${requestId}] Validation error:`, details);
+    return NextResponse.json(
+      { error: "Validation failed", statusCode: 422, requestId, details },
+      { status: 422 }
+    );
+  }
+
+  if (
+    error instanceof SyntaxError &&
+    error.message.includes("JSON")
+  ) {
+    console.error(`[${routeLabel}] [${requestId}] Invalid JSON body`);
+    return NextResponse.json(
+      { error: "Invalid JSON in request body", statusCode: 400, requestId },
+      { status: 400 }
+    );
+  }
+
+  console.error(`[${routeLabel}] [${requestId}] Unhandled error:`, error);
+  return NextResponse.json(
+    { error: "Internal server error", statusCode: 500, requestId },
+    { status: 500 }
+  );
 }
