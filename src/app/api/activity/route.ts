@@ -5,6 +5,7 @@ import { getRecentActivity } from "@/lib/db/queries/activity";
 import { activityQuerySchema } from "@/lib/validators/activity";
 import { rateLimit } from "@/lib/rate-limit";
 import { ApiError } from "@/lib/errors";
+import { ZodError } from "zod";
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,15 +23,29 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
+    const daysParam = searchParams.get("days");
+    const parsedDays = daysParam === null ? 30 : Number(daysParam);
+
     const query = activityQuerySchema.parse({
-      days: Number(searchParams.get("days")) || 30,
+      days: parsedDays,
       type: searchParams.get("type") || "all",
     });
 
-    const activity = await getRecentActivity(session.user.teamId, query.days);
+    const activity = await getRecentActivity(
+      session.user.teamId,
+      query.days,
+      query.type
+    );
 
     return NextResponse.json({ data: activity });
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: "Invalid request query parameters", details: error.flatten() },
+        { status: 400 }
+      );
+    }
+
     if (error instanceof ApiError) {
       return NextResponse.json(
         { error: error.message },

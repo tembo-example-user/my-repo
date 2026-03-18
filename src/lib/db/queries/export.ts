@@ -27,13 +27,57 @@ export async function exportMetrics(
       )
     );
 
-  const header = "Date,Type,Value,User,Email\n";
+  if (params.format === "json") {
+    const jsonData = data.map((row) => ({
+      date: row.date.toISOString(),
+      type: row.type,
+      value: row.value,
+      ...(params.includeUsers
+        ? {
+            userName: row.userName,
+            userEmail: row.userEmail,
+          }
+        : {}),
+    }));
+    return JSON.stringify(jsonData);
+  }
+
+  const escapeCsvValue = (value: string | number | null): string => {
+    if (value === null) return "";
+    const stringValue = String(value);
+    if (
+      stringValue.includes(",") ||
+      stringValue.includes('"') ||
+      stringValue.includes("\n")
+    ) {
+      return `"${stringValue.replace(/"/g, '""')}"`;
+    }
+    return stringValue;
+  };
+
+  const header = params.includeUsers
+    ? "Date,Type,Value,User,Email\n"
+    : "Date,Type,Value\n";
+
   const rows = data
-    .map(
-      (row) =>
-        `${row.date?.toISOString()},${row.type},${row.value},${row.userName},${row.userEmail}`
-    )
+    .map((row) => {
+      const baseRow = [
+        escapeCsvValue(row.date.toISOString()),
+        escapeCsvValue(row.type),
+        escapeCsvValue(row.value),
+      ];
+
+      if (!params.includeUsers) {
+        return baseRow.join(",");
+      }
+
+      return [
+        ...baseRow,
+        escapeCsvValue(row.userName),
+        escapeCsvValue(row.userEmail),
+      ].join(",");
+    })
     .join("\n");
 
-  return header + rows;
+  return `${header}${rows}`;
 }
