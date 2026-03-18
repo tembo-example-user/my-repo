@@ -3,14 +3,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getTeamMembers, addTeamMember } from "@/lib/db/queries/team";
 import { addMemberSchema } from "@/lib/validators/team";
-import { handleApiError } from "@/lib/errors";
+import { handleApiError, generateRequestId } from "@/lib/errors";
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json(
-        { error: "Unauthorized", statusCode: 401 },
+        { error: "Unauthorized", statusCode: 401, requestId: generateRequestId() },
         { status: 401 }
       );
     }
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json(
-        { error: "Unauthorized", statusCode: 401 },
+        { error: "Unauthorized", statusCode: 401, requestId: generateRequestId() },
         { status: 401 }
       );
     }

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
+import crypto from "crypto";
+import type { ApiErrorResponse } from "@/types/error.types";
 
 export class ApiError extends Error {
   statusCode: number;
@@ -46,11 +48,17 @@ export class RateLimitError extends ApiError {
   }
 }
 
-export function handleApiError(error: unknown, routeLabel: string): NextResponse {
+export function generateRequestId(): string {
+  return crypto.randomUUID();
+}
+
+export function handleApiError(error: unknown, routeLabel: string): NextResponse<ApiErrorResponse> {
+  const requestId = generateRequestId();
+
   if (error instanceof ApiError) {
-    console.error(`[${routeLabel}]`, error.message);
+    console.error(`[${routeLabel}] [${requestId}]`, error.message);
     return NextResponse.json(
-      { error: error.message, statusCode: error.statusCode },
+      { error: error.message, statusCode: error.statusCode, requestId },
       { status: error.statusCode }
     );
   }
@@ -60,9 +68,9 @@ export function handleApiError(error: unknown, routeLabel: string): NextResponse
       path: e.path.join("."),
       message: e.message,
     }));
-    console.error(`[${routeLabel}] Validation error:`, details);
+    console.error(`[${routeLabel}] [${requestId}] Validation error:`, details);
     return NextResponse.json(
-      { error: "Validation failed", statusCode: 422, details },
+      { error: "Validation failed", statusCode: 422, requestId, details },
       { status: 422 }
     );
   }
@@ -71,16 +79,16 @@ export function handleApiError(error: unknown, routeLabel: string): NextResponse
     error instanceof SyntaxError &&
     error.message.includes("JSON")
   ) {
-    console.error(`[${routeLabel}] Invalid JSON body`);
+    console.error(`[${routeLabel}] [${requestId}] Invalid JSON body`);
     return NextResponse.json(
-      { error: "Invalid JSON in request body", statusCode: 400 },
+      { error: "Invalid JSON in request body", statusCode: 400, requestId },
       { status: 400 }
     );
   }
 
-  console.error(`[${routeLabel}] Unhandled error:`, error);
+  console.error(`[${routeLabel}] [${requestId}] Unhandled error:`, error);
   return NextResponse.json(
-    { error: "Internal server error", statusCode: 500 },
+    { error: "Internal server error", statusCode: 500, requestId },
     { status: 500 }
   );
 }

@@ -4,14 +4,14 @@ import { authOptions } from "@/lib/auth";
 import { getTeamMetrics } from "@/lib/db/queries/metrics";
 import { metricsQuerySchema } from "@/lib/validators/metrics";
 import { rateLimit } from "@/lib/rate-limit";
-import { handleApiError } from "@/lib/errors";
+import { handleApiError, generateRequestId } from "@/lib/errors";
 
 export async function GET(request: NextRequest) {
   try {
     const rateLimitResult = await rateLimit(request);
     if (!rateLimitResult.success) {
       return NextResponse.json(
-        { error: "Rate limit exceeded", statusCode: 429 },
+        { error: "Rate limit exceeded", statusCode: 429, requestId: generateRequestId() },
         { status: 429 }
       );
     }
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json(
-        { error: "Unauthorized", statusCode: 401 },
+        { error: "Unauthorized", statusCode: 401, requestId: generateRequestId() },
         { status: 401 }
       );
     }
