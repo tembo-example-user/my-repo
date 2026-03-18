@@ -25,12 +25,28 @@ export async function getRecentActivity(
     .orderBy(desc(activityLogs.createdAt))
     .limit(500);
 
-  // TODO: Aggregate by date for chart data
-  // This should return daily counts of commits and PRs
-  return logs.map((log) => ({
-    date: log.createdAt.toISOString().split("T")[0],
-    commits: log.action === "commit" ? 1 : 0,
-    prs: log.action === "pr_merged" ? 1 : 0,
-    user: log.userName || "Unknown",
-  }));
+  // Aggregate by date for chart data — sum commits and PRs per day
+  const aggregated = new Map<string, ActivityDataPoint>();
+
+  for (const log of logs) {
+    const date = log.createdAt.toISOString().split("T")[0];
+    const existing = aggregated.get(date);
+
+    if (existing) {
+      existing.commits += log.action === "commit" ? 1 : 0;
+      existing.prs += log.action === "pr_merged" ? 1 : 0;
+    } else {
+      aggregated.set(date, {
+        date,
+        commits: log.action === "commit" ? 1 : 0,
+        prs: log.action === "pr_merged" ? 1 : 0,
+        user: "",
+      });
+    }
+  }
+
+  // Return sorted by date ascending for proper chart rendering
+  return Array.from(aggregated.values()).sort((a, b) =>
+    a.date.localeCompare(b.date)
+  );
 }

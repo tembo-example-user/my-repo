@@ -39,8 +39,10 @@ export async function getTeamMetrics(
   const getValue = (data: typeof currentMetrics, type: string) =>
     data.find((m) => m.type === type)?.total ?? 0;
 
-  const calcChange = (current: number, previous: number) =>
-    previous === 0 ? 0 : Math.round(((current - previous) / previous) * 100);
+  const calcChange = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return Math.round(((current - previous) / previous) * 100);
+  };
 
   const commits = getValue(currentMetrics, "commit");
   const prevCommits = getValue(previousMetrics, "commit");
