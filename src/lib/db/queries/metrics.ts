@@ -4,6 +4,11 @@ import { eq, and, gte, sql, desc } from "drizzle-orm";
 import { subDays } from "date-fns";
 import type { MetricsQuery, TeamMetrics, DetailedMetrics } from "@/types/metrics.types";
 
+export function calcChange(current: number, previous: number): number {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return Math.round(((current - previous) / previous) * 100);
+}
+
 export async function getTeamMetrics(
   teamId: string,
   query?: MetricsQuery
@@ -38,11 +43,6 @@ export async function getTeamMetrics(
 
   const getValue = (data: typeof currentMetrics, type: string) =>
     data.find((m) => m.type === type)?.total ?? 0;
-
-  const calcChange = (current: number, previous: number) => {
-    if (previous === 0) return current > 0 ? 100 : 0;
-    return Math.round(((current - previous) / previous) * 100);
-  };
 
   const commits = getValue(currentMetrics, "commit");
   const prevCommits = getValue(previousMetrics, "commit");

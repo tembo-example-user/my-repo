@@ -25,7 +25,12 @@ export async function getRecentActivity(
     .orderBy(desc(activityLogs.createdAt))
     .limit(500);
 
-  // Aggregate by date for chart data — sum commits and PRs per day
+  return aggregateActivityByDate(logs);
+}
+
+export function aggregateActivityByDate(
+  logs: { action: string; createdAt: Date }[]
+): ActivityDataPoint[] {
   const aggregated = new Map<string, ActivityDataPoint>();
 
   for (const log of logs) {
@@ -45,7 +50,6 @@ export async function getRecentActivity(
     }
   }
 
-  // Return sorted by date ascending for proper chart rendering
   return Array.from(aggregated.values()).sort((a, b) =>
     a.date.localeCompare(b.date)
   );
