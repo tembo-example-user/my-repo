@@ -16,7 +16,13 @@ export function MetricCard({
   period,
   invertChange = false,
 }: MetricCardProps) {
+  const isNeutral = change === 0;
   const isPositive = invertChange ? change < 0 : change > 0;
+  const changeColorClass = isNeutral
+    ? "text-gray-500"
+    : isPositive
+      ? "text-green-600"
+      : "text-red-600";
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
@@ -26,10 +32,10 @@ export function MetricCard({
         <span
           className={cn(
             "inline-flex items-center text-sm font-medium",
-            isPositive ? "text-green-600" : "text-red-600"
+            changeColorClass
           )}
         >
-          {isPositive ? (
+          {isNeutral ? null : isPositive ? (
             <ArrowUpRight className="h-4 w-4" />
           ) : (
             <ArrowDownRight className="h-4 w-4" />

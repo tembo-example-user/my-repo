@@ -27,7 +27,11 @@ export async function GET(request: NextRequest) {
       type: searchParams.get("type") || "all",
     });
 
-    const activity = await getRecentActivity(session.user.teamId, query.days);
+    const activity = await getRecentActivity(
+      session.user.teamId,
+      query.days,
+      query.type
+    );
 
     return NextResponse.json({ data: activity });
   } catch (error) {

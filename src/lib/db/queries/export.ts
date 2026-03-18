@@ -27,11 +27,30 @@ export async function exportMetrics(
       )
     );
 
+  const escapeCsvField = (value: string | number | null | undefined): string => {
+    if (value === null || value === undefined) {
+      return "";
+    }
+
+    const stringValue = String(value);
+    if (/[",\n]/.test(stringValue)) {
+      return `"${stringValue.replace(/"/g, "\"\"")}"`;
+    }
+
+    return stringValue;
+  };
+
   const header = "Date,Type,Value,User,Email\n";
   const rows = data
     .map(
       (row) =>
-        `${row.date?.toISOString()},${row.type},${row.value},${row.userName},${row.userEmail}`
+        [
+          escapeCsvField(row.date?.toISOString() ?? ""),
+          escapeCsvField(row.type),
+          escapeCsvField(row.value),
+          escapeCsvField(row.userName),
+          escapeCsvField(row.userEmail),
+        ].join(",")
     )
     .join("\n");
 
