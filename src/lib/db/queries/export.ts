@@ -3,6 +3,15 @@ import { metrics, users } from "@/lib/db/schema";
 import { eq, and, gte, lte } from "drizzle-orm";
 import type { ExportParams } from "@/types/export.types";
 
+export function escapeCsvField(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return "";
+  const str = String(value);
+  if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
 // TODO: Implement cursor-based pagination — current implementation
 // times out on datasets > 10k rows (30s Vercel limit)
 export async function exportMetrics(
@@ -29,9 +38,14 @@ export async function exportMetrics(
 
   const header = "Date,Type,Value,User,Email\n";
   const rows = data
-    .map(
-      (row) =>
-        `${row.date?.toISOString()},${row.type},${row.value},${row.userName},${row.userEmail}`
+    .map((row) =>
+      [
+        row.date ? row.date.toISOString() : "",
+        escapeCsvField(row.type),
+        escapeCsvField(row.value),
+        escapeCsvField(row.userName),
+        escapeCsvField(row.userEmail),
+      ].join(",")
     )
     .join("\n");
 
