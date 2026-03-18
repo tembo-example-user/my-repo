@@ -22,12 +22,13 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
+    const daysParam = searchParams.get("days");
     const query = activityQuerySchema.parse({
-      days: Number(searchParams.get("days")) || 30,
-      type: searchParams.get("type") || "all",
+      days: daysParam === null ? undefined : Number(daysParam),
+      type: searchParams.get("type") ?? undefined,
     });
 
-    const activity = await getRecentActivity(session.user.teamId, query.days);
+    const activity = await getRecentActivity(session.user.teamId, query);
 
     return NextResponse.json({ data: activity });
   } catch (error) {

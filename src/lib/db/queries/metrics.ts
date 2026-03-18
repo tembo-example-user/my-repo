@@ -2,7 +2,12 @@ import { db } from "@/lib/db";
 import { metrics, users } from "@/lib/db/schema";
 import { eq, and, gte, sql, desc } from "drizzle-orm";
 import { subDays } from "date-fns";
-import type { MetricsQuery, TeamMetrics, DetailedMetrics } from "@/types/metrics.types";
+import type {
+  MetricsQuery,
+  TeamMetrics,
+  DetailedMetrics,
+  DateRange,
+} from "@/types/metrics.types";
 
 export async function getTeamMetrics(
   teamId: string,
@@ -80,7 +85,14 @@ export async function getDetailedMetrics(params: {
   teamFilter: string;
 }): Promise<DetailedMetrics> {
   // TODO: Implement detailed metrics with breakdowns by user and type
-  const teamMetrics = await getTeamMetrics(params.teamId);
+  const range: DateRange =
+    params.dateRange === "7d" || params.dateRange === "90d"
+      ? params.dateRange
+      : "30d";
+  const teamMetrics = await getTeamMetrics(params.teamId, {
+    range,
+    team: params.teamFilter,
+  });
   return {
     summary: teamMetrics,
     byUser: [],

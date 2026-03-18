@@ -10,3 +10,11 @@ export interface ExportResult {
   rowCount: number;
   generatedAt: Date;
 }
+
+export interface ExportMetricRow {
+  date: Date;
+  type: string;
+  value: number;
+  userName: string | null;
+  userEmail: string | null;
+}

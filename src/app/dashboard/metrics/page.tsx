@@ -14,7 +14,12 @@ export default async function MetricsPage({ searchParams }: MetricsPageProps) {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
 
-  const dateRange: DateRange = (searchParams.range as DateRange) || "30d";
+  const dateRange: DateRange =
+    searchParams.range === "7d" ||
+    searchParams.range === "30d" ||
+    searchParams.range === "90d"
+      ? searchParams.range
+      : "30d";
   const teamFilter = searchParams.team || "all";
 
   const metrics = await getDetailedMetrics({

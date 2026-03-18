@@ -13,7 +13,7 @@ export default async function DashboardPage() {
   if (!session) redirect("/login");
 
   const metrics = await getTeamMetrics(session.user.teamId);
-  const activity = await getRecentActivity(session.user.teamId, 30);
+  const activity = await getRecentActivity(session.user.teamId, { days: 30 });
 
   return (
     <div className="space-y-8">
