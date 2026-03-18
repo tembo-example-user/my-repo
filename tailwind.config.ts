@@ -22,6 +22,9 @@ const config: Config = {
         sans: ["Inter", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
       },
+      animation: {
+        shimmer: "skeleton-shimmer 2s ease-in-out infinite",
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],
