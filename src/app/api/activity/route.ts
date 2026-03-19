@@ -26,11 +26,11 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const query = activityQuerySchema.parse({
-      days: Number(searchParams.get("days")) || 30,
-      type: searchParams.get("type") || "all",
+      days: searchParams.get("days") ?? undefined,
+      type: searchParams.get("type") ?? undefined,
     });
 
-    const activity = await getRecentActivity(session.user.teamId, query.days);
+    const activity = await getRecentActivity(session.user.teamId, query.days, query.type);
 
     return NextResponse.json({ data: activity });
   } catch (error) {

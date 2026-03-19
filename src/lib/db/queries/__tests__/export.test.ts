@@ -1,4 +1,4 @@
-import { escapeCsvField } from "../export";
+import { escapeCsvField, rowsToCsv } from "../export";
 
 describe("escapeCsvField", () => {
   it("returns plain string unchanged when no special characters", () => {
@@ -39,5 +39,42 @@ describe("escapeCsvField", () => {
 
   it("handles zero as a number", () => {
     expect(escapeCsvField(0)).toBe("0");
+  });
+});
+
+describe("rowsToCsv", () => {
+  it("includes user columns when includeUsers is true", () => {
+    const result = rowsToCsv(
+      [
+        {
+          date: "2024-01-01T00:00:00.000Z",
+          type: "commit",
+          value: 3,
+          userName: "Ada",
+          userEmail: "ada@example.com",
+        },
+      ],
+      true
+    );
+
+    expect(result).toContain("Date,Type,Value,User,Email");
+    expect(result).toContain("2024-01-01T00:00:00.000Z,commit,3,Ada,ada@example.com");
+  });
+
+  it("omits user columns when includeUsers is false", () => {
+    const result = rowsToCsv(
+      [
+        {
+          date: "2024-01-01T00:00:00.000Z",
+          type: "commit",
+          value: 3,
+        },
+      ],
+      false
+    );
+
+    expect(result).toContain("Date,Type,Value");
+    expect(result).not.toContain("User,Email");
+    expect(result).toContain("2024-01-01T00:00:00.000Z,commit,3");
   });
 });

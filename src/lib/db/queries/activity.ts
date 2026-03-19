@@ -3,12 +3,19 @@ import { activityLogs, users } from "@/lib/db/schema";
 import { eq, and, gte, desc } from "drizzle-orm";
 import { subDays } from "date-fns";
 import type { ActivityDataPoint } from "@/types/activity.types";
+import type { ActivityQuery } from "@/lib/validators/activity";
 
 export async function getRecentActivity(
   teamId: string,
-  days: number = 30
+  days: number = 30,
+  type: ActivityQuery["type"] = "all"
 ): Promise<ActivityDataPoint[]> {
   const since = subDays(new Date(), days);
+  const actionFilter =
+    type === "all" ? null : eq(activityLogs.action, type === "pr" ? "pr_merged" : type);
+  const whereClause = actionFilter
+    ? and(eq(activityLogs.teamId, teamId), gte(activityLogs.createdAt, since), actionFilter)
+    : and(eq(activityLogs.teamId, teamId), gte(activityLogs.createdAt, since));
 
   const logs = await db
     .select({
@@ -21,7 +28,7 @@ export async function getRecentActivity(
     })
     .from(activityLogs)
     .leftJoin(users, eq(activityLogs.userId, users.id))
-    .where(and(eq(activityLogs.teamId, teamId), gte(activityLogs.createdAt, since)))
+    .where(whereClause)
     .orderBy(desc(activityLogs.createdAt))
     .limit(500);
 
