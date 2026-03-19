@@ -11,7 +11,13 @@ export async function GET(request: NextRequest) {
     const rateLimitResult = await rateLimit(request);
     if (!rateLimitResult.success) {
       return NextResponse.json(
-        { error: "Rate limit exceeded", statusCode: 429, requestId: generateRequestId() },
+        { 
+          status: "error" as const,
+          message: "Rate limit exceeded", 
+          code: "RATE_LIMIT_EXCEEDED",
+          statusCode: 429, 
+          requestId: generateRequestId() 
+        },
         { status: 429 }
       );
     }
@@ -19,7 +25,13 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json(
-        { error: "Unauthorized", statusCode: 401, requestId: generateRequestId() },
+        { 
+          status: "error" as const,
+          message: "Unauthorized", 
+          code: "UNAUTHORIZED",
+          statusCode: 401, 
+          requestId: generateRequestId() 
+        },
         { status: 401 }
       );
     }
