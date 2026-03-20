@@ -21,11 +21,14 @@ export async function POST(request: NextRequest) {
     const validated = exportSchema.parse(body);
 
     const data = await exportMetrics(session.user.teamId, validated);
+    const fileExtension = validated.format === "json" ? "json" : "csv";
+    const contentType =
+      validated.format === "json" ? "application/json" : "text/csv";
 
     return new NextResponse(data, {
       headers: {
-        "Content-Type": "text/csv",
-        "Content-Disposition": `attachment; filename=metrix-export-${Date.now()}.csv`,
+        "Content-Type": contentType,
+        "Content-Disposition": `attachment; filename=metrix-export-${Date.now()}.${fileExtension}`,
       },
     });
   } catch (error) {
