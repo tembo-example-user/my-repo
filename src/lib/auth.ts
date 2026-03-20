@@ -17,13 +17,13 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.sub!;
-        session.user.teamId = token.teamId as string;
+        session.user.id = token.sub ?? "";
+        session.user.teamId = typeof token.teamId === "string" ? token.teamId : "";
       }
       return session;
     },
     async jwt({ token, user }) {
-      if (user) {
+      if (user && "teamId" in user && typeof user.teamId === "string") {
         token.teamId = user.teamId;
       }
       return token;
